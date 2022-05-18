@@ -371,7 +371,24 @@ func main() {
 		defer wg.Done()
 		_state := python3.PyGILState_Ensure()
 		defer python3.PyGILState_Release(_state)
+		file, err := c.FormFile("f1")
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": err.Error(),
+			})
+		}
+		dst := fmt.Sprintf("./test/%s", file.Filename)
+		_ = c.SaveUploadedFile(file, dst)
 
+		args := python3.PyTuple_New(1)
+		python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
+		res := findFunc.Call(args, python3.Py_None)
+		resJson, _ := pythonRepr(res)
+		fmt.Printf("[VARS] findJson = %s\n", resJson)
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": fmt.Sprintf("'%s' uploaded!", file.Filename),
+		})
 	})
 
 	err := r.Run(":5000")
