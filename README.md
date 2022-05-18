@@ -26,10 +26,10 @@
 
 ## 开发环境
 - PyCharm
-- Sublime Test
-
+- Goland
 
 ## 开发语言
+- go 1.18
 - Python3.9
 - html、css、js
 
@@ -85,3 +85,6 @@
 比如基于内容的图像检索：
 ![基于内容的图像检索](image/object_retrieval.png)
 还有很多很多需要算法工程师去探索。
+
+----
+## 鸣谢[胡大佬](https://github.com/Hukeqing)的指导。
