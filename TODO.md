@@ -150,25 +150,26 @@ main.main()
 
 解决方案：
 ```go
-state := python3.PyEval_SaveThread()
 var wg sync.WaitGroup
+state := python3.PyEval_SaveThread()
 
-r.GET("/api/tot_num", func(c *gin.Context) {
-	var res *python3.PyObject
-	wg.Add(1)
-	defer wg.Done()
-	_state := python3.PyGILState_Ensure()
-	defer python3.PyGILState_Release(_state)
-	res = getCntFunc.Call(python3.Py_None, python3.Py_None)
-	resJson, _ := pythonRepr(res)
-	fmt.Printf("[VARS] CntJson = %s\n", resJson)
-	Res := getRes(resJson)
-	c.JSON(http.StatusOK, gin.H{
-	"code": Res.Code,
-	"msg":  Res.Msg,
-	"data": Res.Data,
-	})
-}
+go func() {
+    // 获取已上传的图片数量
+    r.GET("/api/tot_num", func(c *gin.Context) {
+        defer wg.Done()
+        _state := python3.PyGILState_Ensure()
+        defer python3.PyGILState_Release(_state)
+        res := getTotCntFunc.Call(python3.Py_None, python3.Py_None)
+        resJson, _ := pythonRepr(res)
+        // fmt.Printf("[VARS] TotCntJson = %s\n", resJson)
+        Res := getRes(resJson)
+        c.JSON(http.StatusOK, gin.H{
+        "code": Res.Code,
+        "msg":  Res.Msg,
+        "data": Res.Data,
+        })
+    })
+}()
 
 wg.Wait()
 python3.PyEval_RestoreThread(state)

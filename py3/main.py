@@ -71,6 +71,7 @@ def get_file(filename):
 
 # 保存图片到cache中
 def upload_file(filename):
+    # fileArrays = files.split('\n')
     cache.add(ImageModel(filename))
 
 

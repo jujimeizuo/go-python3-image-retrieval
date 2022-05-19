@@ -209,7 +209,7 @@ func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject
 	}
 	fmt.Printf("[FUNC] repr(reduceFuncRepr) = %s\n", reduceFuncRepr)
 
-	findFunc := mainPy.GetAttrString("find")
+	findFunc := mainPy.GetAttrString("find_image")
 	if findFunc == nil {
 		log.Fatalf("find is nil")
 	}
@@ -245,8 +245,12 @@ func getRes(s string) (Res Response) {
 	Res.Code = str[2]
 	Res.Msg = str[1]
 	Res.Data = str[0]
-	fmt.Println(Res)
+	// fmt.Println(Res)
 	return
+}
+
+func getFindRes(s string) {
+
 }
 
 func main() {
@@ -271,8 +275,9 @@ func main() {
 	//defer getFileFunc.DecRef()
 	fmt.Println(getCntFunc, getTotCntFunc, getFileFunc, uploadFunc, reduceFunc, findFunc)
 
-	state := python3.PyEval_SaveThread()
 	var wg sync.WaitGroup
+	wg.Add(500)
+	state := python3.PyEval_SaveThread()
 
 	r := gin.Default()
 
@@ -284,39 +289,41 @@ func main() {
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
-	// 获取Cache中索引图片的数量
-	r.GET("/api/num", func(c *gin.Context) {
-		wg.Add(1)
-		defer wg.Done()
-		_state := python3.PyGILState_Ensure()
-		defer python3.PyGILState_Release(_state)
-		res := getCntFunc.Call(python3.Py_None, python3.Py_None)
-		resJson, _ := pythonRepr(res)
-		fmt.Printf("[VARS] CntJson = %s\n", resJson)
-		Res := getRes(resJson)
-		c.JSON(http.StatusOK, gin.H{
-			"code": Res.Code,
-			"msg":  Res.Msg,
-			"data": Res.Data,
+	go func() {
+		// 获取Cache中索引图片的数量
+		r.GET("/api/num", func(c *gin.Context) {
+			defer wg.Done()
+			_state := python3.PyGILState_Ensure()
+			defer python3.PyGILState_Release(_state)
+			res := getCntFunc.Call(python3.Py_None, python3.Py_None)
+			resJson, _ := pythonRepr(res)
+			// fmt.Printf("[VARS] CntJson = %s\n", resJson)
+			Res := getRes(resJson)
+			c.JSON(http.StatusOK, gin.H{
+				"code": Res.Code,
+				"msg":  Res.Msg,
+				"data": Res.Data,
+			})
 		})
-	})
+	}()
 
-	// 获取已上传的图片数量
-	r.GET("/api/tot_num", func(c *gin.Context) {
-		wg.Add(1)
-		defer wg.Done()
-		_state := python3.PyGILState_Ensure()
-		defer python3.PyGILState_Release(_state)
-		res := getTotCntFunc.Call(python3.Py_None, python3.Py_None)
-		resJson, _ := pythonRepr(res)
-		fmt.Printf("[VARS] TotCntJson = %s\n", resJson)
-		Res := getRes(resJson)
-		c.JSON(http.StatusOK, gin.H{
-			"code": Res.Code,
-			"msg":  Res.Msg,
-			"data": Res.Data,
+	go func() {
+		// 获取已上传的图片数量
+		r.GET("/api/tot_num", func(c *gin.Context) {
+			defer wg.Done()
+			_state := python3.PyGILState_Ensure()
+			defer python3.PyGILState_Release(_state)
+			res := getTotCntFunc.Call(python3.Py_None, python3.Py_None)
+			resJson, _ := pythonRepr(res)
+			// fmt.Printf("[VARS] TotCntJson = %s\n", resJson)
+			Res := getRes(resJson)
+			c.JSON(http.StatusOK, gin.H{
+				"code": Res.Code,
+				"msg":  Res.Msg,
+				"data": Res.Data,
+			})
 		})
-	})
+	}()
 
 	// 获取选择的图片
 	r.GET("/api/img/:filename", func(c *gin.Context) {
@@ -328,25 +335,31 @@ func main() {
 		})
 	})
 
-	//  图片上传
-	r.POST("/api/upload", func(c *gin.Context) {
-		form, _ := c.MultipartForm()
-		files := form.File["file"]
-		for _, file := range files {
-			wg.Add(1)
-			defer wg.Done()
-			_state := python3.PyGILState_Ensure()
-			defer python3.PyGILState_Release(_state)
-			args := python3.PyTuple_New(1)
-			python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
-			uploadFunc.Call(args, python3.Py_None)
-			dst := fmt.Sprintf("./train/%s", file.Filename)
-			_ = c.SaveUploadedFile(file, dst)
-		}
-		c.JSON(http.StatusOK, gin.H{
-			"message": fmt.Sprintf("%d files uploaded!", len(files)),
+	go func() {
+		//  图片上传
+		r.POST("/api/upload", func(c *gin.Context) {
+			form, _ := c.MultipartForm()
+			files := form.File["file"]
+			// wg.Add(len(files))
+			for _, file := range files {
+				file := file
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					_state := python3.PyGILState_Ensure()
+					defer python3.PyGILState_Release(_state)
+					args := python3.PyTuple_New(1)
+					python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
+					uploadFunc.Call(args, python3.Py_None)
+					dst := fmt.Sprintf("./train/%s", file.Filename)
+					_ = c.SaveUploadedFile(file, dst)
+				}()
+			}
+			c.JSON(http.StatusOK, gin.H{
+				"message": fmt.Sprintf("%d files uploaded!", len(files)),
+			})
 		})
-	})
+	}()
 
 	// 检索图片（添加索引）
 	r.POST("/api/reduce", func(c *gin.Context) {
@@ -371,7 +384,7 @@ func main() {
 		defer wg.Done()
 		_state := python3.PyGILState_Ensure()
 		defer python3.PyGILState_Release(_state)
-		file, err := c.FormFile("f1")
+		file, err := c.FormFile("file")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": err.Error(),
