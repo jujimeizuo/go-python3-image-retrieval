@@ -326,15 +326,21 @@ func main() {
 		})
 	}()
 
-	// 获取选择的图片
-	//r.GET("/api/img/:filename", func(c *gin.Context) {
-	//	filename := c.Param("filename")
-	//	args := python3.PyTuple_New(1)
-	//	python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(filename))
-	//	c.JSON(http.StatusOK, gin.H{
-	//		"data": getFileFunc.Call(args, python3.Py_None),
-	//	})
-	//})
+	//获取选择的图片
+	go func() {
+		r.GET("/api/img/:filename", func(c *gin.Context) {
+			defer wg.Done()
+			_state := python3.PyGILState_Ensure()
+			defer python3.PyGILState_Release(_state)
+			filename := c.Param("filename")
+			fmt.Printf("[VARS] filename = %s\n", filename)
+			args := python3.PyTuple_New(1)
+			python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(filename))
+			res := getFileFunc.Call(args, python3.Py_None)
+			resJson, _ := pythonRepr(res)
+			c.String(http.StatusOK, resJson)
+		})
+	}()
 
 	//  图片上传
 	go func() {

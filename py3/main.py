@@ -64,8 +64,7 @@ def get_cnt():
 def get_file(filename):
     with open('train/' + filename, 'rb') as f:
         result = Res(f.read(), mimetype="image/jpeg")
-        print(result)
-        return result
+        return result.data
 
 
 # 保存图片到cache中
