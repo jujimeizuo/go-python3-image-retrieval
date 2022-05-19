@@ -1,6 +1,5 @@
 import os
 
-import cv2
 from flask import Response as Res
 
 import sift
@@ -71,7 +70,6 @@ def get_file(filename):
 
 # 保存图片到cache中
 def upload_file(filename):
-    # fileArrays = files.split('\n')
     cache.add(ImageModel(filename))
 
 
@@ -127,15 +125,13 @@ def reduce():
 
 
 # 图像查找
-def find_image(filepath):
-    image = cv2.imread(filepath)
+def find_image(filename):
     img_count = 10
-    # image.save('./test/' + image.filename)
-    des = sift.get_des('./test/' + image.filename)
+    des = sift.get_des('./test/' + filename)
     word_summary = sift.get_word_summary(des, cache.word_list)
     idf_word_summary = sift.idf_render(word_summary, cache.idf)
     res = []
-    image_label = image.filename.split('_')[0]
+    image_label = filename.split('_')[0]
     total_cnt = 0
     top5_cnt = 0
     top_10_cnt = 0
