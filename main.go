@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/DataDog/go-python3"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -62,7 +64,9 @@ func pythonRepr(o *python3.PyObject) (string, error) {
 	return python3.PyUnicode_AsUTF8(s), nil
 }
 
-//
+// getImportModule
+// @Description: 返回py导入包
+// return []*python3.PyObject
 func getImportModule() (*python3.PyObject, *python3.PyObject) {
 
 	mainPy := ImportModule("./py3", "main")
@@ -90,6 +94,9 @@ func getImportModule() (*python3.PyObject, *python3.PyObject) {
 	return mainPy, siftPy
 }
 
+// getMainFunc
+// @Description: 返回包函数
+// return []*python3.PyObject
 func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject) {
 	getCntFunc := mainPy.GetAttrString("get_cnt")
 	if getCntFunc == nil {
@@ -150,6 +157,25 @@ type Response struct {
 	Data string `json:"data"`
 }
 
+type InfoAll struct {
+	P50_ac  string `json:"p50_ac"`
+	P50_rc  string `json:"p50_rc"`
+	Tp10_ac string `json:"tp10_ac"`
+	Tp10_rc string `json:"tp10_rc"`
+	Tp5_ac  string `json:"tp5_ac"`
+	Tp5_rc  string `json:"tp5_rc"`
+}
+
+type DataAll struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+}
+
+type ResInfoData struct {
+	Info InfoAll   `json:"info"`
+	Data []DataAll `json:"data"`
+}
+
 func getRes(s string) (Res Response) {
 	str := make([]string, 0)
 	flag := false
@@ -172,8 +198,15 @@ func getRes(s string) (Res Response) {
 	Res.Code = str[0]
 	Res.Msg = str[1]
 	Res.Data = str[2]
-	fmt.Println(Res)
+	//fmt.Println(Res)
 	return
+}
+
+func getResInfoAndData(s string) (res ResInfoData) {
+	s = strings.Replace(s, "'", "\"", -1)
+	_ = json.Unmarshal([]byte(s), &res)
+	fmt.Println(res)
+	return res
 }
 
 func main() {
@@ -307,14 +340,14 @@ func main() {
 			python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
 			res := findFunc.Call(args, python3.Py_None)
 			resJson, _ = pythonRepr(res)
-			fmt.Printf("[VARS] findJson = %s\n", resJson)
-			//Res := getRes(resJson)
-			//c.JSON(http.StatusOK, gin.H{
-			//	"code": Res.Code,
-			//	"msg":  Res.Msg,
-			//	"data": Res.Data,
-			//})
-			c.String(http.StatusOK, resJson)
+			//fmt.Printf("[VARS] findJson = %s\n", resJson)
+			Res := getRes(resJson)
+			InfoAndData := getResInfoAndData(Res.Data)
+			c.JSON(http.StatusOK, gin.H{
+				"code": Res.Code,
+				"msg":  Res.Msg,
+				"data": InfoAndData,
+			})
 		})
 	}()
 

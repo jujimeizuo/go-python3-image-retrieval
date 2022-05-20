@@ -86,8 +86,5 @@
 ![基于内容的图像检索](image/object_retrieval.png)
 还有很多很多需要算法工程师去探索。
 
-### 未完成
-- api/find（返回数据到前端的json处理）
-
 ----
 ## 鸣谢[胡大佬](https://github.com/Hukeqing)的指导。

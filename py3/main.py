@@ -1,7 +1,5 @@
 import os
 
-from flask import Response as Res
-
 import sift
 import pickle
 import threading
@@ -148,6 +146,7 @@ def find_image(filename):
     for i in range(5, 10):
         if res[i][1].split('_')[0] == image_label:
             top_10_cnt += 1
+
     return Response.of_ok({'info': {'tp5_ac': "{:.2f}%".format(top5_cnt / 5 * 100),
                                     'tp5_rc': "{:.2f}%".format(top5_cnt / total_cnt * 100),
                                     'tp10_ac': "{:.2f}%".format(top_10_cnt / 10 * 100),
