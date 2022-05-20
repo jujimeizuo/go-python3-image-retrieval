@@ -61,12 +61,6 @@ def get_cnt():
     return Response.of_ok(cache.idf_count).to_string()
 
 
-def get_file(filename):
-    with open('train/' + filename, 'rb') as f:
-        result = Res(f.read(), mimetype="image/jpeg")
-        return result.data
-
-
 # 保存图片到cache中
 def upload_file(filename):
     cache.add(ImageModel(filename))
@@ -77,7 +71,7 @@ def reduce():
     start_time = time.time()
     global cache
     word_count = 0
-    path = "./train"
+    path = "./img"
     for lists in os.listdir(path):
         sub_path = os.path.join(path, lists)
         if os.path.isfile(sub_path):
@@ -105,7 +99,7 @@ def reduce():
 
     def get_des(index):
         if cache.data[index].des is None:
-            cache.data[index].des = sift.get_des('./train/' + cache.data[index].image)
+            cache.data[index].des = sift.get_des('./img/' + cache.data[index].image)
 
     ThreadRunner.add(get_des, len(cache.data))
     cache.word_list = sift.encode([data.des for data in cache.data], word_count)
@@ -126,7 +120,7 @@ def reduce():
 # 图像查找
 def find_image(filename):
     img_count = 10
-    des = sift.get_des('./test/' + filename)
+    des = sift.get_des('./img/' + filename)
     word_summary = sift.get_word_summary(des, cache.word_list)
     idf_word_summary = sift.idf_render(word_summary, cache.idf)
     res = []

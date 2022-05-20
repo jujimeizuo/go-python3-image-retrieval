@@ -90,75 +90,7 @@ func getImportModule() (*python3.PyObject, *python3.PyObject) {
 	return mainPy, siftPy
 }
 
-// getSiftFunc
-// @param siftPy
-// @return []*python3.PyObject
-func getSiftFunc(siftPy *python3.PyObject) (*python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject) {
-
-	getDesFunc := siftPy.GetAttrString("get_des")
-	if getDesFunc == nil {
-		log.Fatalf("getDesFunc is nil")
-	}
-	getDesFuncRepr, err := pythonRepr(getDesFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(get_des) = %s\n", getDesFuncRepr)
-
-	encodeFunc := siftPy.GetAttrString("encode")
-	if encodeFunc == nil {
-		log.Fatalf("encodeFunc is nil")
-	}
-	encodeFuncRepr, err := pythonRepr(encodeFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(encode) = %s\n", encodeFuncRepr)
-
-	getWordSummaryFunc := siftPy.GetAttrString("get_word_summary")
-	if getWordSummaryFunc == nil {
-		log.Fatalf("getWordSummaryFunc is nil")
-	}
-	getWordSummaryFuncRepr, err := pythonRepr(getWordSummaryFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(get_word_summary) = %s\n", getWordSummaryFuncRepr)
-
-	tfidfFunc := siftPy.GetAttrString("tf_idf")
-	if tfidfFunc == nil {
-		log.Fatalf("tfidfFunc is nil")
-	}
-	tfidfFuncRepr, err := pythonRepr(tfidfFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(tf_idf) = %s\n", tfidfFuncRepr)
-
-	idfRenderFunc := siftPy.GetAttrString("idf_render")
-	if idfRenderFunc == nil {
-		log.Fatalf("idfRenderFunc is nil")
-	}
-	idfRenderFuncRepr, err := pythonRepr(tfidfFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(idf_render) = %s\n", idfRenderFuncRepr)
-
-	summaryMatchFunc := siftPy.GetAttrString("summary_match")
-	if summaryMatchFunc == nil {
-		log.Fatalf("summaryMatchFunc is nil")
-	}
-	summaryMatchFuncRepr, err := pythonRepr(tfidfFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(summary_match) = %s\n", summaryMatchFuncRepr)
-
-	return getDesFunc, encodeFunc, getWordSummaryFunc, tfidfFunc, idfRenderFunc, summaryMatchFunc
-}
-
-func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject) {
+func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject, *python3.PyObject) {
 	getCntFunc := mainPy.GetAttrString("get_cnt")
 	if getCntFunc == nil {
 		log.Fatalf("get_cnt is nil")
@@ -178,16 +110,6 @@ func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject
 		panic(err)
 	}
 	fmt.Printf("[FUNC] repr(get_tot_cnt) = %s\n", getTotCntFuncRepr)
-
-	getFileFunc := mainPy.GetAttrString("get_file")
-	if getFileFunc == nil {
-		log.Fatalf("get_file is nil")
-	}
-	getFileFuncRepr, err := pythonRepr(getFileFunc)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Printf("[FUNC] repr(getFileFuncRepr) = %s\n", getFileFuncRepr)
 
 	uploadFunc := mainPy.GetAttrString("upload_file")
 	if uploadFunc == nil {
@@ -219,7 +141,7 @@ func getMainFunc(mainPy *python3.PyObject) (*python3.PyObject, *python3.PyObject
 	}
 	fmt.Printf("[FUNC] repr(findFuncRepr) = %s\n", findFuncRepr)
 
-	return getCntFunc, getTotCntFunc, getFileFunc, uploadFunc, reduceFunc, findFunc
+	return getCntFunc, getTotCntFunc, uploadFunc, reduceFunc, findFunc
 }
 
 type Response struct {
@@ -261,20 +183,9 @@ func main() {
 
 	mainPy, _ := getImportModule()
 
-	//getDesFunc, encodeFunc, getWordSummaryFunc, tfidfFunc, idfRenderFunc, summaryMatchFunc := getSiftFunc(siftPy)
-	//defer getDesFunc.DecRef()
-	//defer encodeFunc.DecRef()
-	//defer getWordSummaryFunc.DecRef()
-	//defer tfidfFunc.DecRef()
-	//defer idfRenderFunc.DecRef()
-	//defer summaryMatchFunc.DecRef()
-	//fmt.Println(getDesFunc, encodeFunc, getWordSummaryFunc, tfidfFunc, idfRenderFunc, summaryMatchFunc)
+	getCntFunc, getTotCntFunc, uploadFunc, reduceFunc, findFunc := getMainFunc(mainPy)
 
-	getCntFunc, getTotCntFunc, getFileFunc, uploadFunc, reduceFunc, findFunc := getMainFunc(mainPy)
-	//defer getCntFunc.DecRef()
-	//defer getTotCntFunc.DecRef()
-	//defer getFileFunc.DecRef()
-	fmt.Println(getCntFunc, getTotCntFunc, getFileFunc, uploadFunc, reduceFunc, findFunc)
+	fmt.Println(getCntFunc, getTotCntFunc, uploadFunc, reduceFunc, findFunc)
 
 	var wg sync.WaitGroup
 	wg.Add(500)
@@ -327,20 +238,11 @@ func main() {
 	}()
 
 	//获取选择的图片
-	go func() {
-		r.GET("/api/img/:filename", func(c *gin.Context) {
-			defer wg.Done()
-			_state := python3.PyGILState_Ensure()
-			defer python3.PyGILState_Release(_state)
-			filename := c.Param("filename")
-			fmt.Printf("[VARS] filename = %s\n", filename)
-			args := python3.PyTuple_New(1)
-			python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(filename))
-			res := getFileFunc.Call(args, python3.Py_None)
-			resJson, _ := pythonRepr(res)
-			c.String(http.StatusOK, resJson)
-		})
-	}()
+	r.GET("/api/img/:filename", func(c *gin.Context) {
+		filename := c.Param("filename")
+		fmt.Printf("[VARS] filename = %s\n", filename)
+		c.File("./img/" + filename)
+	})
 
 	//  图片上传
 	go func() {
@@ -358,7 +260,7 @@ func main() {
 					python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
 					uploadFunc.Call(args, python3.Py_None)
 				}()
-				dst := fmt.Sprintf("./train/%s", file.Filename)
+				dst := fmt.Sprintf("./img/%s", file.Filename)
 				_ = c.SaveUploadedFile(file, dst)
 			}
 			c.JSON(http.StatusOK, gin.H{
@@ -397,7 +299,7 @@ func main() {
 					"message": err.Error(),
 				})
 			}
-			dst := fmt.Sprintf("./test/%s", file.Filename)
+			dst := fmt.Sprintf("./img/%s", file.Filename)
 			_ = c.SaveUploadedFile(file, dst)
 			var resJson string
 
@@ -405,14 +307,14 @@ func main() {
 			python3.PyTuple_SetItem(args, 0, python3.PyUnicode_FromString(file.Filename))
 			res := findFunc.Call(args, python3.Py_None)
 			resJson, _ = pythonRepr(res)
-			//fmt.Printf("[VARS] findJson = %s\n", resJson)
-			Res := getRes(resJson)
-			c.JSON(http.StatusOK, gin.H{
-				"code": Res.Code,
-				"msg":  Res.Msg,
-				"data": Res.Data,
-			})
-
+			fmt.Printf("[VARS] findJson = %s\n", resJson)
+			//Res := getRes(resJson)
+			//c.JSON(http.StatusOK, gin.H{
+			//	"code": Res.Code,
+			//	"msg":  Res.Msg,
+			//	"data": Res.Data,
+			//})
+			c.String(http.StatusOK, resJson)
 		})
 	}()
 
