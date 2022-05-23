@@ -205,7 +205,7 @@ func getRes(s string) (Res Response) {
 func getResInfoAndData(s string) (res ResInfoData) {
 	s = strings.Replace(s, "'", "\"", -1)
 	_ = json.Unmarshal([]byte(s), &res)
-	fmt.Println(res)
+	//fmt.Println(res)
 	return res
 }
 
@@ -273,7 +273,7 @@ func main() {
 	//获取选择的图片
 	r.GET("/api/img/:filename", func(c *gin.Context) {
 		filename := c.Param("filename")
-		fmt.Printf("[VARS] filename = %s\n", filename)
+		// fmt.Printf("[VARS] filename = %s\n", filename)
 		c.File("./img/" + filename)
 	})
 
