@@ -3,6 +3,16 @@ import math
 import numpy as np
 from scipy.cluster.vq import kmeans, vq
 
+
+'''
+构建尺度空间
+构造高斯差分尺度空间
+DoG尺度空间极值点检测
+特征点精确定位
+去除不稳定点
+
+'''
+
 # 实例化sift函数
 sift = cv2.SIFT_create()
 
@@ -10,7 +20,7 @@ sift = cv2.SIFT_create()
 # 获取特征点和特征向量
 def get_des(image_path):
     image = cv2.imread(image_path)
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 灰度直方图
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # 灰度图
     kp, des = sift.detectAndCompute(gray, None)  # kp is 关键点， des is sift特征向量
 
     ''' 画出关键点
@@ -32,7 +42,7 @@ def encode(image_des_list, word_num):
             image_des_stack = des
         else:
             image_des_stack = np.vstack((image_des_stack, des))
-    word_list, distortion = kmeans(image_des_stack, word_num)  # 欧式距离聚类
+    word_list, distortion = kmeans(image_des_stack, 2000)  # 欧式距离聚类
     return word_list
 
 
