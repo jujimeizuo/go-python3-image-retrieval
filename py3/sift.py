@@ -42,8 +42,15 @@ def encode(image_des_list, word_num):
             image_des_stack = des
         else:
             image_des_stack = np.vstack((image_des_stack, des))
-    word_list, distortion = kmeans(image_des_stack, 2000)  # 欧式距离聚类
+    word_list, distortion = kmeans(image_des_stack, word_num)  # 欧式距离聚类
     return word_list
+
+
+def encode_plus(image_des_list, word_num):
+    trainer = cv2.BOWKMeansTrainer(word_num)
+    for des in image_des_list:
+        trainer.add(des)
+    return trainer.cluster()
 
 
 # 将特征向量改为关键词直方图(TF)

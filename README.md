@@ -86,9 +86,5 @@
 ![基于内容的图像检索](image/object_retrieval.png)
 还有很多很多需要算法工程师去探索。
 
-# Task
-- 查询扩展
-- 重排序
-
 ----
 ## 鸣谢[胡大佬](https://github.com/Hukeqing)的指导。
