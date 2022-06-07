@@ -46,13 +46,6 @@ def encode(image_des_list, word_num):
     return word_list
 
 
-def encode_plus(image_des_list, word_num):
-    trainer = cv2.BOWKMeansTrainer(word_num)
-    for des in image_des_list:
-        trainer.add(des)
-    return trainer.cluster()
-
-
 # 将特征向量改为关键词直方图(TF)
 def get_word_summary(image_des, word_list):
     word_summary = np.zeros(len(word_list))
